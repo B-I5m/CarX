@@ -1,18 +1,19 @@
-using CarX.Domain.Enums;
-
+// CarX.Domain.Entities/Car.cs (Обновленный)
 namespace CarX.Domain.Entities;
-    
-// CarX.Domain.Entities/Car.cs
-public class Car
+using CarX.Domain.Enums;
+using CarX.Domain.Common;
+
+public class Car : BaseEntity
 {
-    public long Id { get; set; }
-    public string Model { get; set; }
+    public string Model { get; set; } = string.Empty;
     public int Year { get; set; }
-    public decimal Price { get; set; }
+    public decimal Price { get; set; } // Для продажи — полная цена, для аренды — цена в сутки
     public CarClass Class { get; set; } 
-    public string CarImage { get; set; } 
+    public string MainImage { get; set; } = string.Empty; // Оставляем одну главной
 
     public long BrandId { get; set; }
-    public virtual Brand Brand { get; set; }
-    public virtual List<CarImage> CarImages { get; set; }
+    public virtual Brand? Brand { get; set; }
+    
+    // Коллекция доп. изображений
+    public virtual ICollection<CarImage> Images { get; set; } = new List<CarImage>();
 }

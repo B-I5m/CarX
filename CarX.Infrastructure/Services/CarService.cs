@@ -20,23 +20,23 @@ namespace CarX.Infrastructure.Services
 
         // ТОТ САМЫЙ МЕТОД ФИЛЬТРАЦИИ
         // В файле CarService.cs
+        // Обновленный метод в CarService.cs для фильтрации
         public async Task<IEnumerable<Car>> GetFilteredCarsAsync(string? searchTerm, decimal? minPrice, decimal? maxPrice, CarClass? carClass)
         {
             var query = _context.Cars
                 .Include(c => c.Brand)
-                .AsNoTracking()
-                .AsQueryable();
+                .Include(c => c.Images) // Не забываем подгрузить картинки
+                .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                var lowerSearch = searchTerm.ToLower();
-                query = query.Where(x => x.Model.ToLower().Contains(lowerSearch) || 
-                                         x.Brand.Name.ToLower().Contains(lowerSearch));
+                var lower = searchTerm.ToLower();
+                query = query.Where(x => x.Model.ToLower().Contains(lower) || x.Brand.Name.ToLower().Contains(lower));
             }
 
-            if (minPrice.HasValue) query = query.Where(x => x.Price >= minPrice.Value);
-            if (maxPrice.HasValue) query = query.Where(x => x.Price <= maxPrice.Value);
-            if (carClass.HasValue) query = query.Where(x => x.Class == carClass.Value);
+            if (minPrice.HasValue) query = query.Where(x => x.Price >= minPrice);
+            if (maxPrice.HasValue) query = query.Where(x => x.Price <= maxPrice);
+            if (carClass.HasValue) query = query.Where(x => x.Class == carClass);
 
             return await query.ToListAsync();
         }

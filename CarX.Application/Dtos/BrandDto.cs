@@ -3,6 +3,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
+namespace CarX.Application.Dtos;
 public record BrandDto(
     long Id, 
     string Name, 

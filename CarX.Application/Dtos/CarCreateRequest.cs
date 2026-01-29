@@ -1,6 +1,8 @@
 using CarX.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 
+namespace CarX.Application.Dtos;
+
 public class CarCreateRequest
 {
     public string Model { get; set; } = string.Empty;

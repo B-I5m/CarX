@@ -1,61 +1,71 @@
 using CarX.Application.Interfaces;
 using CarX.Domain.Entities;
 using CarX.Domain.Enums;
-using CarXWebApi.Application.Dtos; // Убедись, что этот namespace верный
+using CarX.Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using CarX.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
 public class CarsController : ControllerBase
 {
+    // CarsController.cs
     private readonly ICarService _service;
     private readonly IWebHostEnvironment _env;
     private readonly IMapper _mapper;
+    private readonly ApplicationDbContext _context; // Добавь это поле
 
-    public CarsController(ICarService service, IWebHostEnvironment env, IMapper mapper)
+    public CarsController(ICarService service, IWebHostEnvironment env, IMapper mapper, ApplicationDbContext context)
     {
         _service = service;
         _env = env;
         _mapper = mapper;
+        _context = context; // И это
     }
 
     // 1. ПОЛУЧИТЬ ВСЕ (с фильтрацией)
     [HttpGet]
     public async Task<IActionResult> Get(
-        [FromQuery] string? search,   // Теперь контроллер видит слово "search" из URL
+        [FromQuery] string? search, 
         [FromQuery] decimal? min, 
         [FromQuery] decimal? max, 
         [FromQuery] CarClass? cls)
     {
-        // Теперь переменная 'search' передается первой, как мы и прописали в интерфейсе
+        // Сервис вернет список, даже если фильтры пустые (null)
         var cars = await _service.GetFilteredCarsAsync(search, min, max, cls);
-    
+
+        // Теперь CarListItemDto существует и маппер его увидит
         var dtos = _mapper.Map<IEnumerable<CarListItemDto>>(cars);
         return Ok(dtos);
     }
-    
 
-    // 2. ПОЛУЧИТЬ ПО ID
+// 2. ПОЛУЧИТЬ ПО ID (с галереей)
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(long id)
     {
-        var car = await _service.GetByIdAsync(id);
+        // Важно: в сервисе или тут через контекст нужно сделать Include(c => c.Images)
+        var car = await _context.Cars
+            .Include(c => c.Brand)
+            .Include(c => c.Images)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
         if (car == null) return NotFound("Машина не найдена");
-        
+    
         var dto = _mapper.Map<CarDetailDto>(car);
         return Ok(dto);
     }
 
-    // 3. СОЗДАТЬ МАШИНУ
+    // Вставь это в CarsController.cs вместо старых методов
+
     [HttpPost]
-    // [Authorize(Roles = "Admin")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create([FromForm] CarCreateRequest request)
     {
-        string fileName = await SaveImage(request.ImageFile);
-        
+        // 1. Сохраняем главное фото
+        string mainImgName = await SaveImage(request.ImageFile);
 
         var car = new Car {
             Model = request.Model,
@@ -63,44 +73,47 @@ public class CarsController : ControllerBase
             Price = request.Price,
             Class = request.Class,
             BrandId = request.BrandId,
-            CarImage = "/uploads/cars/" + fileName
+            MainImage = "/uploads/cars/" + mainImgName, // Используем MainImage
+            Images = new List<CarImage>() 
         };
-        
-        
 
-        var created = await _service.CreateAsync(car);
-        var dto = _mapper.Map<CarDetailDto>(created);
-        
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, dto);
+        // 2. Сохраняем дополнительные фото
+        if (request.ImageFiles != null)
+        {
+            foreach (var file in request.ImageFiles)
+            {
+                string fileName = await SaveImage(file);
+                car.Images.Add(new CarImage { ImagePath = "/uploads/cars/" + fileName });
+            }
+        }
+
+        await _context.Cars.AddAsync(car);
+        await _context.SaveChangesAsync();
+    
+        return Ok(car);
     }
 
-    // 4. ОБНОВИТЬ МАШИНУ
     [HttpPut("{id}")]
-    // [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Update(long id, [FromBody] CarCreateRequest request) // Используем Request или DTO
+    public async Task<IActionResult> Update(long id, [FromForm] CarCreateRequest request) 
     {
-        var existingCar = await _service.GetByIdAsync(id);
+        var existingCar = await _context.Cars.Include(c => c.Images).FirstOrDefaultAsync(x => x.Id == id);
         if (existingCar == null) return NotFound("Машина не найдена");
 
-        // Обновляем поля
         existingCar.Model = request.Model;
         existingCar.Year = request.Year;
         existingCar.Price = request.Price;
         existingCar.Class = request.Class;
         existingCar.BrandId = request.BrandId;
 
-        // Если пришло новое фото — обновляем, если нет — оставляем старое
         if (request.ImageFile != null)
         {
-            existingCar.CarImage = "/uploads/cars/" + await SaveImage(request.ImageFile);
+            // Исправлено: CarImage заменен на MainImage
+            existingCar.MainImage = "/uploads/cars/" + await SaveImage(request.ImageFile);
         }
 
-        var result = await _service.UpdateAsync(existingCar);
-        if (!result) return BadRequest("Не удалось обновить данные");
-
+        await _context.SaveChangesAsync();
         return NoContent();
     }
-
     // 5. УДАЛИТЬ МАШИНУ
     [HttpDelete("{id}")]
     // [Authorize(Roles = "Admin")]

@@ -1,22 +1,11 @@
-// CarX.Application.DTOs/Car/CarListItemDto.cs
+namespace CarX.Application.Dtos;
 
-using System.ComponentModel.DataAnnotations;
-using CarX.Domain.Enums;
-using Microsoft.AspNetCore.Http;
+// CarX.Application.DTOs/Order/OrderCreateRequest.cs
 
-namespace CarXWebApi.Application.Dtos;
 
-public record CarListItemDto(
-    long Id,
-    string Model,
-    string BrandName,
-    decimal Price,
-    int Year,
-    string? CarImage,
-    string CarClass // Отдаем строкой: "Budget", "Sport" и т.д.
-);
+// CarX.Application.DTOs/Rent/RentCreateRequest.cs
 
-// CarX.Application.DTOs/Car/CarDetailDto.cs
+// CarX.Application.DTOs/Car/CarDetailDto.cs (Обновленный)
 public record CarDetailDto(
     long Id,
     string Model,
@@ -24,7 +13,19 @@ public record CarDetailDto(
     string BrandCountry,
     decimal Price,
     int Year,
-    string? CarImage,
+    string? MainImage, 
     string CarClass,
-    string? BrandImage // Логотип бренда в деталях машины
+    string? BrandImage,
+    List<string> AdditionalImages // Сюда уйдут все фото из таблицы CarImages
+);
+// CarX.Application.DTOs/Car/CarListItemDto.cs
+
+public record CarListItemDto(
+    long Id,
+    string Model,
+    string BrandName,
+    decimal Price,
+    int Year,
+    string? MainImage, // Главное фото
+    string CarClass
 );

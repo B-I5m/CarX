@@ -1,5 +1,4 @@
 using CarX.Application.Interfaces;
-using CarX.Application.Mappings;
 using CarX.Infrastructure.Services;
 using CarX.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using CarX.Infrastructure.AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +21,10 @@ builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 // 3. СЕРВИСЫ (Dependency Injection)
 builder.Services.AddScoped<ICarService, CarService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
+
+// Добавь в Program.cs перед builder.Build()
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IRentService, RentService>();
 
 // 4. АВТОРИЗАЦИЯ И JWT (Каркас для ролей)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

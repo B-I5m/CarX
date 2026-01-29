@@ -12,9 +12,24 @@ public class ApplicationDbContext : DbContext
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<Brand> Brands => Set<Brand>();
     public DbSet<User> Users => Set<User>();
+// CarX.Infrastructure.Data/ApplicationDbContext.cs
+public DbSet<Order> Orders => Set<Order>();
+public DbSet<Rent> Rents => Set<Rent>();
+// ApplicationDbContext.cs
+public DbSet<CarImage> CarImages => Set<CarImage>();
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+    base.OnModelCreating(modelBuilder);
+
+    // Настройка цен, чтобы в БД была нужная точность
+    modelBuilder.Entity<Order>().Property(o => o.FinalPrice).HasColumnType("decimal(18,2)");
+    modelBuilder.Entity<Rent>().Property(r => r.TotalPrice).HasColumnType("decimal(18,2)");
+    
+    modelBuilder.Entity<Order>().Property(o => o.Status).HasConversion<string>();
+    modelBuilder.Entity<Rent>().Property(r => r.Status).HasConversion<string>();
         // Это важно, чтобы не прописать связи вручную
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
