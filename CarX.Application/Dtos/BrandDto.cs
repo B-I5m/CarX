@@ -18,3 +18,11 @@ public class BrandCreateRequest
     [Required] public string Country { get; set; } = string.Empty;
     public IFormFile? ImageFile { get; set; } // Для кнопки "Выбрать файл"
 }
+// CarX.Application.Dtos/Brand/BrandUpdateRequest.cs
+
+
+public record BrandUpdateRequest(
+    string Name,
+    string Country,
+    IFormFile? BrandImage // Теперь это файл!
+);

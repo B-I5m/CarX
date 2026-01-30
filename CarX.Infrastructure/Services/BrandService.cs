@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CarX.Application.Dtos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using CarX.Domain.Entities;
@@ -33,24 +34,43 @@ namespace CarX.Infrastructure.Services
             return brand;
         }
 
-        public async Task<bool> UpdateAsync(Brand brand)
+        // CarX.Infrastructure.Services/BrandService.cs
+
+        // CarX.Infrastructure.Services/BrandService.cs
+
+        public async Task<bool> UpdateBrandAsync(long id, BrandUpdateRequest request)
         {
-            // Проверяем, существует ли сущность в базе перед обновлением
-            var exists = await _context.Brands.AnyAsync(b => b.Id == brand.Id);
-            if (!exists) return false;
+            var brand = await _context.Brands.FindAsync(id);
+            if (brand == null) return false;
 
-            _context.Entry(brand).State = EntityState.Modified;
-            
-            try 
+            brand.Name = request.Name;
+            brand.Country = request.Country;
+
+            // ЛОГИКА ДЛЯ ФАЙЛА:
+            if (request.BrandImage != null)
             {
-                return await _context.SaveChangesAsync() > 0;
+                // 1. Генерируем имя файла (например: brand_1.jpg)
+                string fileName = $"brand_{id}{Path.GetExtension(request.BrandImage.FileName)}";
+        
+                // 2. Путь, куда сохранить (в папку wwwroot/images)
+                string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+        
+                if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+                string filePath = Path.Combine(folderPath, fileName);
+
+                // 3. Сохраняем файл физически на диск
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await request.BrandImage.CopyToAsync(stream);
+                }
+
+                // 4. В базу записываем только ПУТЬ (строку)
+                brand.BrandImage = $"/images/{fileName}";
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                return false;
-            }
+
+            return await _context.SaveChangesAsync() > 0;
         }
-
         public async Task<bool> DeleteAsync(long id)
         {
             var brand = await _context.Brands.FindAsync(id);

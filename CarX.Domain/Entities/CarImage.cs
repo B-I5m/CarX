@@ -6,5 +6,6 @@ public class CarImage : BaseEntity
 {
     public string ImagePath { get; set; } = string.Empty;
     public long CarId { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore]
     public virtual Car? Car { get; set; }
 }

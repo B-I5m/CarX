@@ -10,13 +10,16 @@ public record CarDetailDto(
     long Id,
     string Model,
     string BrandName,
-    string BrandCountry,
     decimal Price,
     int Year,
+    string Color,
+    int Horsepower,
+    double EngineVolume,
+    double Acceleration0to100,
+    string Transmission, // Будет строкой после маппинга
+    string BodyType,     // Будет строкой после маппинга
     string? MainImage, 
-    string CarClass,
-    string? BrandImage,
-    List<string> AdditionalImages // Сюда уйдут все фото из таблицы CarImages
+    List<string> AdditionalImages
 );
 // CarX.Application.DTOs/Car/CarListItemDto.cs
 

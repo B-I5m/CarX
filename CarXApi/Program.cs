@@ -48,7 +48,12 @@ builder.Services.AddAuthorization(options =>
 });
 
 // 5. КОНТРОЛЛЕРЫ И SWAGGER
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => 
+    {
+        // Игнорировать циклы и просто возвращать null там, где они начинаются
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

@@ -54,15 +54,17 @@ public class BrandsController : ControllerBase
 
     // PUT: api/brands/{id}
     [HttpPut("{id}")]
-    // [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Update(long id, [FromBody] Brand brand)
+// [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Update(long id, [FromForm] BrandUpdateRequest request)
     {
-        if (id != brand.Id) return BadRequest("ID в URL и объекте не совпадают");
+        // Теперь проверка (id != brand.Id) не нужна, 
+        // так как в DTO нет поля Id — мы верим тому Id, который пришел в URL.
 
-        var updated = await _service.UpdateAsync(brand);
+        var updated = await _service.UpdateBrandAsync(id, request);
+    
         if (!updated) return NotFound("Бренд не найден для обновления");
 
-        return NoContent();
+        return Ok("Бренд успешно обновлен"); // Или return NoContent();
     }
 
     // DELETE: api/brands/{id}
