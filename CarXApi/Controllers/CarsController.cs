@@ -73,6 +73,8 @@ namespace CarXWebApi.Controllers
         [Consumes("multipart/form-data")]
         // [Authorize(Roles = "Admin")]
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Create([FromForm] CarCreateRequest request)
         {
             var car = await _service.CreateAsync(request);
@@ -87,6 +89,8 @@ namespace CarXWebApi.Controllers
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
         // [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Update(long id, [FromForm] CarCreateRequest request) 
         {
             // Передаем ID и DTO в сервис
@@ -100,7 +104,7 @@ namespace CarXWebApi.Controllers
 
         // 6. УДАЛИТЬ МАШИНУ
         [HttpDelete("{id}")]
-        // [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(long id)
         {
             var deleted = await _service.DeleteAsync(id);

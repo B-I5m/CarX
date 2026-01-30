@@ -38,6 +38,7 @@ public class BrandsController : ControllerBase
     [HttpPost]
     // [Authorize(Roles = "Admin")]
     [Consumes("multipart/form-data")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromForm] BrandCreateRequest request)
     {
         string fileName = await SaveImage(request.ImageFile);
@@ -53,8 +54,10 @@ public class BrandsController : ControllerBase
     }
 
     // PUT: api/brands/{id}
+    
     [HttpPut("{id}")]
 // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(long id, [FromForm] BrandUpdateRequest request)
     {
         // Теперь проверка (id != brand.Id) не нужна, 
@@ -70,6 +73,7 @@ public class BrandsController : ControllerBase
     // DELETE: api/brands/{id}
     [HttpDelete("{id}")]
     // [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(long id)
     {
         var deleted = await _service.DeleteAsync(id);
