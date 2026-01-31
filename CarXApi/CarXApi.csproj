@@ -32,6 +32,7 @@
       <Folder Include="wwwroot\images\" />
       <Folder Include="wwwroot\uploads\brands\" />
       <Folder Include="wwwroot\uploads\cars\" />
+      <Folder Include="wwwroot\uploads\RentCar\" />
     </ItemGroup>
 
 </Project>

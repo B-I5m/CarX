@@ -136,6 +136,34 @@ namespace CarX.Infrastructure.Data.Migrations
                     b.ToTable("CarImages");
                 });
 
+            modelBuilder.Entity("CarX.Domain.Entities.Favorite", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("CarId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("RentCarId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("RentCarId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Favorites");
+                });
+
             modelBuilder.Entity("CarX.Domain.Entities.Order", b =>
                 {
                     b.Property<long>("Id")
@@ -180,14 +208,14 @@ namespace CarX.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("CarId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("FromDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("RentCarId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -207,11 +235,39 @@ namespace CarX.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CarId");
+                    b.HasIndex("RentCarId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("Rents");
+                });
+
+            modelBuilder.Entity("CarX.Domain.Entities.RentCarImage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("RentCarId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RentCarId");
+
+                    b.ToTable("RentCarImages");
                 });
 
             modelBuilder.Entity("CarX.Domain.Entities.User", b =>
@@ -417,6 +473,50 @@ namespace CarX.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RentCar", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("BrandId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Deposit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsBusy")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("PricePerDay")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Transmission")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BrandId");
+
+                    b.ToTable("RentCars");
+                });
+
             modelBuilder.Entity("CarX.Domain.Entities.Car", b =>
                 {
                     b.HasOne("CarX.Domain.Entities.Brand", "Brand")
@@ -437,6 +537,29 @@ namespace CarX.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Car");
+                });
+
+            modelBuilder.Entity("CarX.Domain.Entities.Favorite", b =>
+                {
+                    b.HasOne("CarX.Domain.Entities.Car", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId");
+
+                    b.HasOne("RentCar", "RentCar")
+                        .WithMany()
+                        .HasForeignKey("RentCarId");
+
+                    b.HasOne("CarX.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Car");
+
+                    b.Navigation("RentCar");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CarX.Domain.Entities.Order", b =>
@@ -460,9 +583,9 @@ namespace CarX.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("CarX.Domain.Entities.Rent", b =>
                 {
-                    b.HasOne("CarX.Domain.Entities.Car", "Car")
+                    b.HasOne("RentCar", "RentCar")
                         .WithMany()
-                        .HasForeignKey("CarId")
+                        .HasForeignKey("RentCarId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -472,9 +595,20 @@ namespace CarX.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Car");
+                    b.Navigation("RentCar");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CarX.Domain.Entities.RentCarImage", b =>
+                {
+                    b.HasOne("RentCar", "RentCar")
+                        .WithMany("Images")
+                        .HasForeignKey("RentCarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RentCar");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -528,12 +662,28 @@ namespace CarX.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RentCar", b =>
+                {
+                    b.HasOne("CarX.Domain.Entities.Brand", "Brand")
+                        .WithMany()
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Brand");
+                });
+
             modelBuilder.Entity("CarX.Domain.Entities.Brand", b =>
                 {
                     b.Navigation("Cars");
                 });
 
             modelBuilder.Entity("CarX.Domain.Entities.Car", b =>
+                {
+                    b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("RentCar", b =>
                 {
                     b.Navigation("Images");
                 });

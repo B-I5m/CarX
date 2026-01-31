@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CarX.Infrastructure.AutoMapper;
-using CarX.Domain.Entities; // Добавил
-using Microsoft.AspNetCore.Identity; // Добавил
+using CarX.Domain.Entities; 
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +17,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// --- НОВОЕ: Настройка Identity для User на long ---
+// --- Identity для User на long ---
 builder.Services.AddIdentity<User, IdentityRole<long>>(config =>
     {
         config.Password.RequiredLength = 4;
@@ -28,7 +28,6 @@ builder.Services.AddIdentity<User, IdentityRole<long>>(config =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
-// --------------------------------------------------
 
 // 2. AUTOMAPPER
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -37,16 +36,17 @@ builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddScoped<ICarService, CarService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IRentCarService, RentCarService>();
 builder.Services.AddScoped<IRentService, RentService>();
-
-// --- НОВОЕ: Регистрация сервиса аккаунтов ---
 builder.Services.AddScoped<IAccountService, AccountService>();
-// --------------------------------------------
+
+// --- ДОБАВЛЕНО: Регистрация сервиса избранного ---
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+// --------------------------------------------------
 
 // 4. АВТОРИЗАЦИЯ И JWT
 builder.Services.AddAuthentication(options => 
 {
-    // Обновил настройки, чтобы Identity и JWT дружили
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
@@ -73,6 +73,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllers()
     .AddJsonOptions(options => 
     {
+        // Игнорируем циклы, чтобы не падал при Include(Brand) или Include(Images)
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
@@ -88,7 +89,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Введите JWT токен (без слова Bearer, Swagger сам его добавит)"
+        Description = "Введите JWT токен"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -102,26 +103,24 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // 6. MIDDLEWARE (ПОРЯДОК ВАЖЕН!)
-
 app.UseSwagger();
 app.UseSwaggerUI();
-
 
 app.UseHttpsRedirection();
 app.UseStaticFiles(); 
 
 app.UseRouting();
 
+// Сначала проверяем КТО, потом ЧТО можно
 app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllers();
 
-// 7. АВТО-МИГРАЦИИ
+// 7. АВТО-МИГРАЦИИ (Автоматически создаст таблицу Favorites при запуске)
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    // Identity создаст свои таблицы здесь
     await dbContext.Database.MigrateAsync();
 }
 
